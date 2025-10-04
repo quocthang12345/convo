@@ -23,6 +23,7 @@ target/
 
 ### Environment Variables
 .env
+.env
 
 ### NetBeans ###
 /nbproject/private/

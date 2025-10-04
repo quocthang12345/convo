@@ -1,0 +1,31 @@
+name: Convo CI
+run-name: Continuous Integration of Convo
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-project:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17 for project
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - run: mvn --batch-mode --update-snapshots verify
+      - run: mkdir build && cp target/*.war build
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: convo-package
+          path: build
