@@ -12,7 +12,8 @@ jobs:
   build-project:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout project
+        uses: actions/checkout@v5
 
       - name: Set up JDK 17 for project
         uses: actions/setup-java@v5
@@ -21,8 +22,19 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - run: mvn --batch-mode --update-snapshots verify
-      - run: mkdir build && cp target/*.war build
+      - name: Build project
+        env:
+          APPLICATION_NAME: ${{ vars.APPLICATION_NAME }}
+          APPLICATION_PORT: ${{ vars.APPLICATION_PORT }}
+          DB_HOST: ${{ vars.DB_HOST }}
+          DB_USERNAME: ${{ vars.DB_USERNAME }}
+          DB_PASSWORD: ${{ vars.DB_PASSWORD }}
+          EUREKA_HOSTNAME: ${{ vars.EUREKA_HOSTNAME }}
+          EUREKA_DEFAULT_ZONE: ${{ vars.EUREKA_DEFAULT_ZONE }}
+        run: mvn --batch-mode --update-snapshots verify
+
+      - name: Create a directory and copy result to it.
+        run: mkdir build && cp target/*.war build
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
