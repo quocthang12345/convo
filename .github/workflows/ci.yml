@@ -9,8 +9,41 @@ on:
       - main
 
 jobs:
-  build-project:
+  unit-tests:
     runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout project
+        uses: actions/checkout@v5
+      - name: Setup JDK for test
+        uses: actions/setup-java@v5
+        with:
+          cache: maven
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Run unit tests
+        run: mvn clean test -B
+
+  build-project:
+    needs: [unit-tests]
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: convo_db
+          POSTGRES_USER: thangtran
+          POSTGRES_PASSWORD: 010100
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout project
         uses: actions/checkout@v5
@@ -23,15 +56,14 @@ jobs:
           cache: maven
 
       - name: Build project
+        run: mvn --batch-mode --update-snapshots verify
         env:
           APPLICATION_NAME: ${{ vars.APPLICATION_NAME }}
           APPLICATION_PORT: ${{ vars.APPLICATION_PORT }}
-          DB_HOST: ${{ vars.DB_HOST }}
-          DB_USERNAME: ${{ vars.DB_USERNAME }}
-          DB_PASSWORD: ${{ vars.DB_PASSWORD }}
-          EUREKA_HOSTNAME: ${{ vars.EUREKA_HOSTNAME }}
-          EUREKA_DEFAULT_ZONE: ${{ vars.EUREKA_DEFAULT_ZONE }}
-        run: mvn --batch-mode --update-snapshots verify
+          DB_HOST: jdbc:postgresql://localhost:5432/convo_db
+          DB_USERNAME: thangtran
+          DB_PASSWORD: 010100
+          EUREKA_CLIENT_ENABLED: false
 
       - name: Create a directory and copy result to it.
         run: mkdir build && cp target/*.war build
